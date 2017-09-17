@@ -3,6 +3,8 @@ import { GameManager } from './gameManager'
 import * as _ from 'lodash'
 import * as assert from 'assert'
 
+export type GridState = 'free' | 'blocked' | 'out_of_bounds'
+
 export class Board {
   private readonly HORIZONTAL_GRID_COUNT = 10
   private readonly VERTICAL_GRID_COUNT = 50000
@@ -26,6 +28,7 @@ export class Board {
     const freePosX = _.sample(this.getFreeBottomGridPositions())!
     assert.notEqual(freePosX, null)
     this.grids[freePosX][0] = car
+    return {x: freePosX, y: 0}
   }
 
   public canAddCar (): boolean {
@@ -55,6 +58,13 @@ export class Board {
     }
     return carsAtTheEnd
   }
+
+  public checkIfOutOfBounds(pos: {x:number, y: number}): boolean {
+    return pos.x < 0 || pos.x >= this.HORIZONTAL_GRID_COUNT || pos.y < 0 || pos.y >= this.VERTICAL_GRID_COUNT
+  }
+
+  public checkIfBlocked(pos: {x:number, y:number}): boolean {
+    return !_.isNil(this.grids[pos.x][pos.y])
+  }
 }
 
-export type GridState = 'free' | 'blocked' | 'out_of_bounds'
