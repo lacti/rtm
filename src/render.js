@@ -7,6 +7,7 @@ const r = {
     move: 400
   }
 }
+
 class Camera {
   update() {
     if (this.center) {
@@ -46,6 +47,7 @@ class CarRO {
     this.from = this.to = (initPos || { x: 0, y: 0 })
     this.sprite = new TimeGauge(128, [0, 1])
   }
+
   update(dt) {
     let x = this.to.x * r.car.w
     let y = this.to.y * r.car.h
@@ -62,14 +64,17 @@ class CarRO {
     this.x = x
     this.y = y
   }
+
   move(dest) {
     this.to = dest
     this.moveTick = 0
     this.state = 'move'
   }
+
   pos() {
     return { x: this.x, y: this.y }
   }
+
   draw(dt) {
     let pos = this.renderer.camera.translate(this.pos())
     renderer.drawers.drawCar(this.index, pos.x, pos.y, this.sprite.update(dt))
@@ -79,8 +84,8 @@ class CarRO {
 export default class Renderer {
   constructor() {
     this.canvas = document.getElementById('canvas')
-    this.canvas.width = window.innerWidth
-    this.canvas.height = window.innerHeight
+    this.fitToWindow()
+    window.addEventListener('resize', () => this.fitToWindow())
 
     this.ctx = canvas.getContext('2d')
     this.drawers = {
@@ -88,10 +93,16 @@ export default class Renderer {
         this.ctx.fillStyle = color
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
       }
+
     }
 
     this.camera = new Camera()
     this.cars = []
+  }
+
+  fitToWindow() {
+    this.canvas.width = window.innerWidth
+    this.canvas.height = window.innerHeight
   }
 
   spawn(index, pos) {
@@ -144,7 +155,7 @@ export default class Renderer {
     const car = this.spawn(0, { x: 0, y: 0 })
     this.spawn(1, { x: 1, y: 0 })
 
-    let posY = 0
+    let posY = 1
     setInterval(() => {
       car.move({ x: 0, y: posY++ })
     }, 1000)
