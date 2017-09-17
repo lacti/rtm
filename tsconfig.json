@@ -1,0 +1,23 @@
+{
+	"compileOnSave": true,
+	"compilerOptions": {
+		"module": "commonjs",
+		"target": "es2016",
+		"sourceMap": true,
+		"experimentalDecorators": true,
+		"strictNullChecks": true,
+		"noImplicitAny": true,
+		"suppressImplicitAnyIndexErrors": true,
+		"removeComments": true,
+		"allowSyntheticDefaultImports": true,
+		"importHelpers": true,
+		"alwaysStrict": true
+	},
+	"include": [
+		"./**/*"
+	],
+	"exclude": [
+		"node_modules",
+		"dist"
+	]
+}
