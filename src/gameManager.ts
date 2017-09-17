@@ -2,7 +2,8 @@ import { Board } from './board'
 import { Car } from './car'
 import * as assert from 'assert'
 import * as _ from 'lodash'
-type gameState = 'not_started' | 'playing' | 'over'
+
+type GameState = 'not_started' | 'playing' | 'over'
 
 export class GameManager {
   // in milliseconds
@@ -10,30 +11,35 @@ export class GameManager {
   // in milliseconds
   private readonly GAME_DURATION = 60e3
 
-  private board: Board = new Board()
-  private state = 'not_started'
+  private board: Board
+  private _state: GameState = 'not_started'
   private startTimeMs: number
   private lastRenderTimeMs: number
   private lastTickTimeMs: number | undefined
 
   public constructor () {
+    this.board = new Board(this)
+  }
+
+  public get state () {
+    return this._state
   }
 
   public start () {
-    if (this.state !== 'not_started') {
+    if (this._state !== 'not_started') {
       throw new Error('game already started or game over')
     }
     const car1 = new Car(this.board)
     const car2 = new Car(this.board)
     assert(this.board.cars.length > 1, 'at least 2 cars needed to start the race')
-    this.state = 'playing'
+    this._state = 'playing'
     this.startTimeMs = performance.now()
     this.lastRenderTimeMs = this.startTimeMs
     this.lastTickTimeMs = this.startTimeMs
     requestAnimationFrame(() => this.update)
   }
 
-  public update(timeMs: number) {
+  public update (timeMs: number) {
     const elapsed = timeMs - this.startTimeMs
     const isGameOver = elapsed >= this.GAME_DURATION
     if (isGameOver) {
@@ -45,7 +51,7 @@ export class GameManager {
         const tickDiffMs = timeMs - this.lastTickTimeMs
         const tickDiff = Math.floor(tickDiffMs / this.TICK_INTERVAL)
         if (tickDiff > 0) {
-          for (let i=0; i<tickDiff; ++i) {
+          for (let i = 0; i < tickDiff; ++i) {
             this.onTick()
           }
         }
@@ -63,12 +69,12 @@ export class GameManager {
 
   }
 
-  public onGameOver() {
-    this.state = 'over'
+  public onGameOver () {
+    this._state = 'over'
 
   }
 
-  public onTick() {
+  public onTick () {
     this.lastTickTimeMs = performance.now()
   }
 }
