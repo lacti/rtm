@@ -9,10 +9,14 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/lodash": "^4.14.74",
+    "@types/node": "^8.0.28",
     "source-map-loader": "^0.2.1",
     "ts-loader": "^2.3.7",
     "typescript": "^2.5.2",
     "webpack": "^3.6.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "lodash": "^4.17.4"
+  }
 }

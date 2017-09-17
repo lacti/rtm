@@ -11,5 +11,6 @@ export class Car {
 
   public constructor (board: Board) {
     this.board = board
+    this.board.cars.push(this)
   }
 }
