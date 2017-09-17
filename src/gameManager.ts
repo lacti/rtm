@@ -41,8 +41,7 @@ export class GameManager {
 
   public update (timeMs: number) {
     const elapsed = timeMs - this.startTimeMs
-    const isGameOver = elapsed >= this.GAME_DURATION
-    if (isGameOver) {
+    if (elapsed >= this.GAME_DURATION) {
       this.onGameOver()
     } else {
       if (_.isNil(this.lastTickTimeMs)) {
@@ -60,7 +59,7 @@ export class GameManager {
     const diff = timeMs - this.lastRenderTimeMs
     this.render(diff)
     this.lastRenderTimeMs = timeMs
-    if (!isGameOver) {
+    if (this.state !== 'over') {
       requestAnimationFrame(() => this.update)
     }
   }
@@ -75,6 +74,9 @@ export class GameManager {
   }
 
   public onTick () {
+    if (!_.isEmpty(this.board.getCarsAtTheEnd())) {
+      this.onGameOver()
+    }
     this.lastTickTimeMs = performance.now()
   }
 }

@@ -45,6 +45,16 @@ export class Board {
     }
     return freeGrids
   }
+
+  public getCarsAtTheEnd(): Car[] {
+    const carsAtTheEnd: Car[] = []
+    for (let x=0; x<this.HORIZONTAL_GRID_COUNT; ++x) {
+      if (!_.isNil(this.grids[x][this.VERTICAL_GRID_COUNT-1])) {
+        carsAtTheEnd.push(this.grids[x][this.VERTICAL_GRID_COUNT-1] as Car)
+      }
+    }
+    return carsAtTheEnd
+  }
 }
 
 export type GridState = 'free' | 'blocked' | 'out_of_bounds'
