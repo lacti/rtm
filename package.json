@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "webpack --display-modules --config webpack.config.js"
+    "build": "webpack --display-modules --config webpack.config.js",
+    "server": "webpack-dev-server --env.debug --port 8000"
   },
   "author": "",
   "license": "ISC",

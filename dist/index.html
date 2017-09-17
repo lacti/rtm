@@ -1,5 +1,125 @@
-<html><head></head>
+<html>
+
+<head>
+  <style type='text/css'>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+</head>
+<canvas id="canvas"></canvas>
+
+<div id="resources" style="display: none;"></div>
+
 <body>
-<script type="text/javascript" src="./bundle.js"></script>
+  <script type="text/javascript">
+    const r = {
+      car: {
+        w: 32, h: 40
+      }
+    }
+
+    const canvas = document.getElementById('canvas')
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+
+    const ctx = canvas.getContext('2d')
+    console.log(ctx)
+
+    const drawers = {
+      fillBackground: (color) => {
+        ctx.fillStyle = color
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+      }
+    }
+    const loadResource = (path, afterLoaded) => {
+      const resources = document.getElementById('resources')
+      const img = document.createElement('img')
+      img.src = path
+      img.addEventListener('load', () => afterLoaded(img))
+      resources.appendChild(img)
+    }
+
+    const loadResources = (afterLoaded) => {
+      loadResource('images/car.png', (img) => {
+        drawers.drawCar = (index, x, y, sprite) => {
+          ctx.drawImage(img, r.car.w * index, sprite * r.car.h, r.car.w, r.car.h, x, y, r.car.w, r.car.h)
+        }
+        afterLoaded()
+      })
+    }
+
+    let camera = { x: 0, y: 0 }
+    class TimeGauge {
+      constructor(interval, chooses) {
+        this.interval = interval
+        this.chooses = chooses
+      }
+      update(delta) {
+        this.progress = (this.progress || 0) + delta
+        const current = parseInt(this.progress / this.interval)
+        if (current != this.previous) {
+          this.index = ((this.index || 0) + 1) % this.chooses.length
+        }
+        this.previous = current
+        return this.chooses[this.index]
+      }
+    }
+    class GoCar {
+      constructor(index) {
+        this.index = index
+        this.pos = { x: index, y: 0 }
+      }
+    }
+    class RoCar {
+      constructor(index) {
+        this.index = index
+        this.from = { x: 0, y: 0 }
+        this.to = { x: 0, y: 0 }
+        this.sprite = new TimeGauge(128, [0, 1]);
+      }
+      update(go) {
+
+      }
+      draw(dt) {
+        // move
+        let x = this.to.x
+        let y = this.to.y
+        if (this.moveTick) {
+          this.moveTick += dt
+          if (this.moveTick > r.tick.move) {
+            this.moveTick = 0
+          }
+          x = (this.to.x - this.from.x) * r.car.w * (this.moveTick / r.tick.move)
+          y = (this.to.y - this.from.y) * r.car.h * (this.moveTick / r.tick.move)
+        }
+
+        drawers.drawCar(this.index, x, y, this.sprite.update(dt))
+      }
+    }
+
+    const car = new RoCar(0);
+    let y = canvas.height - 50
+    const render = (dt) => {
+      drawers.fillBackground('#888888')
+      car.draw(dt)
+    }
+
+    loadResources(() => {
+      let lastRender = 0
+      const renderLoop = (timestamp) => {
+        const delta = timestamp - (lastRender || timestamp)
+        render(delta)
+        lastRender = timestamp
+        window.requestAnimationFrame(renderLoop)
+      }
+      window.requestAnimationFrame(renderLoop)
+    });
+  </script>
 </body>
+
 </html>
