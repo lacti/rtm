@@ -4,48 +4,17 @@ const r = {
     w: 32, h: 40
   },
   tick: {
-    move: 400
+    move: 200
   }
-}
-
-const canvas = document.getElementById('canvas')
-canvas.width = window.innerWidth
-canvas.height = window.innerHeight
-
-const ctx = canvas.getContext('2d')
-console.log(ctx)
-
-const drawers = {
-  fillBackground: (color) => {
-    ctx.fillStyle = color
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-  }
-}
-const loadResource = (path, afterLoaded) => {
-  const resources = document.getElementById('resources')
-  const img = document.createElement('img')
-  img.src = path
-  img.addEventListener('load', () => afterLoaded(img))
-  resources.appendChild(img)
-}
-
-const loadResources = (afterLoaded) => {
-  loadResource('images/car.png', (img) => {
-    drawers.drawCar = (index, x, y, sprite) => {
-      ctx.drawImage(img, r.car.w * index, sprite * r.car.h, r.car.w, r.car.h, x, y, r.car.w, r.car.h)
-    }
-    afterLoaded()
-  })
 }
 
 class Camera {
-  me(me) {
-    this.me = me
-  }
   update() {
-    const pos = this.me.pos();
-    this.x = pos.x
-    this.y = pos.y
+    if (this.center) {
+      const pos = this.center.pos();
+      this.x = pos.x
+      this.y = pos.y
+    }
   }
   translate(pos) {
     return {
@@ -54,7 +23,6 @@ class Camera {
     }
   }
 }
-const camera = new Camera()
 
 class TimeGauge {
   constructor(interval, chooses) {
@@ -71,12 +39,15 @@ class TimeGauge {
     return this.chooses[this.index]
   }
 }
+
 class CarRO {
-  constructor(index, initPos) {
+  constructor(renderer, index, initPos) {
+    this.renderer = renderer
     this.index = index
     this.from = this.to = (initPos || { x: 0, y: 0 })
-    this.sprite = new TimeGauge(128, [0, 1]);
+    this.sprite = new TimeGauge(64, [0, 1])
   }
+
   update(dt) {
     let x = this.to.x * r.car.w
     let y = this.to.y * r.car.h
@@ -93,44 +64,119 @@ class CarRO {
     this.x = x
     this.y = y
   }
+
   move(dest) {
     this.to = dest
     this.moveTick = 0
     this.state = 'move'
   }
+
   pos() {
     return { x: this.x, y: this.y }
   }
+
   draw(dt) {
-    let pos = camera.translate(this.pos())
-    drawers.drawCar(this.index, pos.x, pos.y, this.sprite.update(dt))
+    let pos = this.renderer.camera.translate(this.pos())
+    renderer.drawers.drawCar(this.index, pos.x, pos.y, this.sprite.update(dt))
   }
 }
 
-const cars = []
-const car = new CarRO(0)
-const car2 = new CarRO(1, { x: 1, y: 0 })
+export default class Renderer {
+  constructor() {
+    this.canvas = document.getElementById('canvas')
+    this.fitToWindow()
+    window.addEventListener('resize', () => this.fitToWindow())
 
-cars.push(car)
-cars.push(car2)
+    this.ctx = canvas.getContext('2d')
+    this.drawers = {
+      fillBackground: (color) => {
+        this.ctx.fillStyle = color
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
+      }
 
-camera.me(car)
+    }
 
-let y = canvas.height - 50
-const render = (dt) => {
-  drawers.fillBackground('#888888')
-  cars.forEach(each => each.update(dt))
-  camera.update()
-  cars.forEach(each => each.draw(dt))
-}
-
-loadResources(() => {
-  let lastRender = 0
-  const renderLoop = (timestamp) => {
-    const delta = timestamp - (lastRender || timestamp)
-    render(delta)
-    lastRender = timestamp
-    window.requestAnimationFrame(renderLoop)
+    this.camera = new Camera()
+    this.cars = []
   }
-  window.requestAnimationFrame(renderLoop)
-});
+
+  fitToWindow() {
+    this.canvas.width = window.innerWidth
+    this.canvas.height = window.innerHeight
+  }
+
+  spawn(index, pos) {
+    const car = new CarRO(this, index, pos)
+    if (!this.camera.center) {
+      this.camera.center = car
+    }
+    this.cars.push(car)
+    return car
+  }
+
+  loadResource(path, afterLoaded) {
+    const resources = document.getElementById('resources')
+    const img = document.createElement('img')
+    img.src = path
+    img.addEventListener('load', () => afterLoaded(img))
+    resources.appendChild(img)
+  }
+
+  loadResources(afterLoaded) {
+    this.loadResource('images/car.png', (img) => {
+      this.drawers.drawCar = (index, x, y, sprite) => {
+        this.ctx.drawImage(img, r.car.w * index, sprite * r.car.h, r.car.w, r.car.h, x, y, r.car.w, r.car.h)
+      }
+      afterLoaded()
+    })
+  }
+
+  render(dt) {
+    this.drawers.fillBackground('#888888')
+    this.cars.forEach(each => each.update(dt))
+    this.camera.update()
+    this.cars.forEach(each => each.draw(dt))
+  }
+
+  start() {
+    this.loadResources(() => {
+      let lastRender = 0
+      const renderLoop = (timestamp) => {
+        const delta = timestamp - (lastRender || timestamp)
+        this.render(delta)
+        lastRender = timestamp
+        window.requestAnimationFrame(renderLoop)
+      }
+      window.requestAnimationFrame(renderLoop)
+    });
+  }
+
+  demo() {
+    const spawnDemo = (index, center) => {
+      const car = this.spawn(index % 7, { x: index, y: 0 })
+      this.cars.push(car)
+      if (center) {
+        this.camera.center = car
+      }
+      const spawnX = index
+      return {
+        car: car, roam: () => {
+          const rand = Math.random()
+          if (rand > 0.7) car.move({ x: car.from.x, y: car.from.y + 1 })
+          else if (rand > 0.6) car.move({ x: Math.max(car.from.x - 1, spawnX - 2), y: car.from.y })
+          else if (rand > 0.4) car.move({ x: Math.min(car.from.x + 1, spawnX + 2), y: car.from.y })
+          else if (rand > 0.2) car.move({ x: Math.max(car.from.x - 1, spawnX - 2), y: car.from.y + 1 })
+          else if (rand > 0.1) car.move({ x: Math.min(car.from.x + 1, spawnX + 2), y: car.from.y + 1 })
+        }
+      }
+    }
+    const demo = []
+    for (let i = 0; i < 21; i++) {
+      demo.push(spawnDemo(i, i == 10))
+    }
+
+    setInterval(() => {
+      demo.forEach(each => each.roam())
+    }, 208)
+  }
+}
