@@ -4,7 +4,7 @@ const r = {
     w: 32, h: 40
   },
   tick: {
-    move: 400
+    move: 200
   }
 }
 
@@ -45,7 +45,7 @@ class CarRO {
     this.renderer = renderer
     this.index = index
     this.from = this.to = (initPos || { x: 0, y: 0 })
-    this.sprite = new TimeGauge(128, [0, 1])
+    this.sprite = new TimeGauge(64, [0, 1])
   }
 
   update(dt) {
@@ -152,12 +152,31 @@ export default class Renderer {
   }
 
   demo() {
-    const car = this.spawn(0, { x: 0, y: 0 })
-    this.spawn(1, { x: 1, y: 0 })
+    const spawnDemo = (index, center) => {
+      const car = this.spawn(index % 7, { x: index, y: 0 })
+      this.cars.push(car)
+      if (center) {
+        this.camera.center = car
+      }
+      const spawnX = index
+      return {
+        car: car, roam: () => {
+          const rand = Math.random()
+          if (rand > 0.7) car.move({ x: car.from.x, y: car.from.y + 1 })
+          else if (rand > 0.6) car.move({ x: Math.max(car.from.x - 1, spawnX - 2), y: car.from.y })
+          else if (rand > 0.4) car.move({ x: Math.min(car.from.x + 1, spawnX + 2), y: car.from.y })
+          else if (rand > 0.2) car.move({ x: Math.max(car.from.x - 1, spawnX - 2), y: car.from.y + 1 })
+          else if (rand > 0.1) car.move({ x: Math.min(car.from.x + 1, spawnX + 2), y: car.from.y + 1 })
+        }
+      }
+    }
+    const demo = []
+    for (let i = 0; i < 21; i++) {
+      demo.push(spawnDemo(i, i == 10))
+    }
 
-    let posY = 1
     setInterval(() => {
-      car.move({ x: 0, y: posY++ })
-    }, 1000)
+      demo.forEach(each => each.roam())
+    }, 208)
   }
 }
